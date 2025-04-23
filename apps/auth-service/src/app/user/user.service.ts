@@ -13,7 +13,13 @@ export class UserService {
       throw new ConflictException('User already exist');
     }
     const user = await this.prismaService.users.create({
-      data: { name, email, password, imagesId: '', following: [] },
+      data: {
+        name,
+        email,
+        password,
+        imagesId: '507f1f77bcf86cd799439011',
+        following: [],
+      },
     });
     return user;
   }

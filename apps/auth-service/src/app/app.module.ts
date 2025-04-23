@@ -23,9 +23,9 @@ import { ConfigModule } from '@nestjs/config';
     GraphQLModule.forRoot<ApolloDriverConfig>({
       driver: ApolloDriver,
       playground: false,
-      graphiql: true,
+      path: '/api/graphql',
       typePaths: ['./**/*.graphql'],
-      // plugins: [ApolloServerPluginLandingPageLocalDefault()],
+      plugins: [ApolloServerPluginLandingPageLocalDefault()],
     }),
     UserModule,
   ],
