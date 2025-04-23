@@ -15,7 +15,7 @@ import { ConfigModule } from '@nestjs/config';
       isGlobal: true,
     }),
     MongooseModule.forRoot(
-      'mongodb+srv://deepanshuvalorant:oaKGvcKROFY0bzHA@blog2023.5ilixor.mongodb.net/',
+      process.env.DATABASE_URL,
       {
         dbName: 'graphql',
       }
