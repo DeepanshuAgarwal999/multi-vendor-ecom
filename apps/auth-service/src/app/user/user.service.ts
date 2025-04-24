@@ -13,13 +13,7 @@ export class UserService {
       throw new ConflictException('User already exist');
     }
     const user = await this.prismaService.users.create({
-      data: {
-        name,
-        email,
-        password,
-        imagesId: '507f1f77bcf86cd799439011',
-        following: [],
-      },
+      data: { name, email, password, imagesId: '', following: [] },
     });
     return user;
   }
@@ -28,31 +22,6 @@ export class UserService {
   }
   async getUser(id: string) {
     return this.prismaService.users.findUnique({
-      where: { id },
-    });
-  }
-
-  async updateUser(id: string, name: string, email: string) {
-    const user = await this.prismaService.users.findUnique({
-      where: { id },
-    });
-    if (!user) {
-      throw new Error('User not found');
-    }
-    return this.prismaService.users.update({
-      where: { id },
-      data: { name, email },
-    });
-  }
-
-  async deleteUser(id: string) {
-    const user = await this.prismaService.users.findUnique({
-      where: { id },
-    });
-    if (!user) {
-      throw new Error('User not found');
-    }
-    return this.prismaService.users.delete({
       where: { id },
     });
   }
