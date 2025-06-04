@@ -19,7 +19,10 @@ export class AuthResolver {
   @Mutation('userRegistration')
   async userRegistration(@Args('name') name: string, @Args('email') email: string, @Args('password') password: string) {
     validateRegistrationData({ name, email, password }, 'user');
-    return this.userService.userRegistration({ name, email });
+    await this.userService.userRegistration({ name, email });
+    return {
+      message: 'OTP sent to email, please check your email for verification',
+    };
   }
 
   @Mutation('verifyRegistrationOtp')

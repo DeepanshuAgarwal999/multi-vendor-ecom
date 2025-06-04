@@ -9,4 +9,5 @@ import { RedisModule } from '../redis/redis.module';
   providers: [PrismaService, AuthService, AuthResolver],
   exports: [],
 })
-export class AuthModule {}
+export class AuthModule {
+}

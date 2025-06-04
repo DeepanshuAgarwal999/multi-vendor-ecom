@@ -1,6 +1,6 @@
 import { ConflictException, Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
-import { sendOtp, verifyOtp } from '../../utils/auth.helper';
+import { checkOtpRestrictions, sendOtp, trackOtpRequests, verifyOtp } from '../../utils/auth.helper';
 import { RedisService } from '../redis/redis.service';
 
 @Injectable()
@@ -15,8 +15,11 @@ export class AuthService {
       throw new ConflictException('User already exist with this email!');
     }
 
+    await checkOtpRestrictions(email, this.redisService);
+    await trackOtpRequests(email, this.redisService);
+
     // Send OTP for verification
-    return await sendOtp(name, email, 'registration', this.redisService);
+    return await sendOtp(name, email, 'user-activation-mail', this.redisService);
   }
 
   async verifyRegistrationOtp(email: string, otp: string) {

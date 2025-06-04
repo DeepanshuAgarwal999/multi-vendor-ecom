@@ -26,6 +26,7 @@ import { HealthController } from './health/health.controller';
       typePaths: ['./**/*.graphql'],
       plugins: [ApolloServerPluginLandingPageLocalDefault()],
     }),
+
     AuthModule,
   ],
   controllers: [AppController, HealthController],
