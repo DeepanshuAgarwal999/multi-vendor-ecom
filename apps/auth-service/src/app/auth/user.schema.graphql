@@ -17,13 +17,20 @@ type Image {
   user: User!
 }
 
+type AuthResponse {
+  success: Boolean!
+  message: String!
+  otp: String
+}
+
 type Query {
   users: [User]
   user(id: ID!): User
 }
 
 type Mutation {
-  userRegistration(name: String!, email: String!, password: String): User!
+  userRegistration(name: String!, email: String!, password: String!): AuthResponse!
+  verifyRegistrationOtp(email: String!, otp: String!): Boolean!
   updateUser(id: ID!, name: String!, email: String!): User!
   deleteUser(id: ID!): User
 }

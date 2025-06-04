@@ -9,6 +9,7 @@ import { AppModule } from './app/app.module';
 import { CorsOptions } from '@nestjs/common/interfaces/external/cors-options.interface';
 import { CustomExceptionFilter } from 'packages/error-handler/custom-exception.filter';
 
+
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   const corsOptions: CorsOptions = {

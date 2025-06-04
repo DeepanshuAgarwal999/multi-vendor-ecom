@@ -25,7 +25,7 @@ async function bootstrap() {
       return next(); // Skip proxy and process normally
     }
     createProxyMiddleware({
-      target: 'http://localhost:6001',
+      target: 'http://localhost:6001/api',
       changeOrigin: true,
     })(req, res, next);
   });
