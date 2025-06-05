@@ -5,6 +5,12 @@ module.exports = {
   output: {
     path: join(__dirname, '../../dist/apps/auth-service'),
   },
+  resolve: {
+    alias: {
+      '@packages': join(__dirname, '../../packages'),
+      extensions: ['.js', '.ts'],
+    },
+  },
   plugins: [
     new NxAppWebpackPlugin({
       target: 'node',
