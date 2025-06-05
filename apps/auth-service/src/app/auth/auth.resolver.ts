@@ -1,4 +1,4 @@
-import { Args, Mutation, Resolver, Query } from '@nestjs/graphql';
+import { Args, Mutation, Resolver, Query, Context } from '@nestjs/graphql';
 import { AuthService } from './auth.service';
 import { validateRegistrationData } from '../../utils/auth.helper';
 
@@ -17,8 +17,8 @@ export class AuthResolver {
   }
 
   @Mutation('userRegistration')
-  async userRegistration(@Args('name') name: string, @Args('email') email: string, @Args('password') password: string) {
-    validateRegistrationData({ name, email, password }, 'user');
+  async userRegistration(@Args('name') name: string, @Args('email') email: string) {
+    validateRegistrationData({ name, email }, 'user');
     await this.userService.userRegistration({ name, email });
     return {
       message: 'OTP sent to email, please check your email for verification',
@@ -26,8 +26,37 @@ export class AuthResolver {
   }
 
   @Mutation('verifyRegistrationOtp')
-  async verifyRegistrationOtp(@Args('email') email: string, @Args('otp') otp: string) {
-    return this.userService.verifyRegistrationOtp(email, otp);
+  async verifyRegistrationOtp(
+    @Args('email') email: string,
+    @Args('otp') otp: string,
+    @Args('password') password: string,
+    @Args('name') name: string
+  ) {
+    return this.userService.verifyRegistrationOtp({ email, otp, password, name });
+  }
+
+  @Mutation('loginUser')
+  async loginUser(@Args('email') email: string, @Args('password') password: string, @Context() context: any) {
+    const response = context.res;
+    return this.userService.loginUser(email, password, response);
+  }
+
+  @Mutation('userForgotPassword')
+  async userForgotPassword(@Args('email') email: string) {
+    return this.userService.userForgotPassword(email);
+  }
+  @Mutation('userResetPassword')
+  async userResetPassword(@Args('email') email: string, @Args('newPassword') newPassword: string) {
+    return this.userService.userResetPassword(email, newPassword);
+  }
+
+  @Mutation('verifyForgotPasswordOtp')
+  async verifyForgotPasswordOtp(
+    @Args('email') email: string,
+    @Args('otp') otp: string,
+    @Args('newPassword') password: string
+  ) {
+    return this.userService.verifyForgotPasswordOtp({ email, otp });
   }
 
   @Mutation('updateUser')

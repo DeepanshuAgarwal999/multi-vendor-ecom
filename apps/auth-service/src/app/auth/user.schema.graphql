@@ -28,8 +28,8 @@ type Query {
 
 
 type Mutation {
-  userRegistration(name: String!, email: String!, password: String!): AuthResponse!
-  verifyRegistrationOtp(email: String!, otp: String!): Boolean!
+  userRegistration(name: String!, email: String!): AuthResponse!
+  verifyRegistrationOtp(email: String!, otp: String!, password: String!, name: String!): AuthResponse!
   updateUser(id: ID!, name: String!, email: String!): User!
   deleteUser(id: ID!): User
 }

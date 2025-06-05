@@ -7,15 +7,18 @@ import { ApolloDriver, ApolloDriverConfig, ApolloFederationDriver } from '@nestj
 import { ApolloServerPluginLandingPageLocalDefault } from '@apollo/server/plugin/landingPage/default';
 import { AuthModule } from './auth/auth.module';
 import { ConfigModule } from '@nestjs/config';
-import { RedisModule } from './redis/redis.module';
-import { HealthController } from './health/health.controller';
+import { RedisModule } from '@packages/libs/redis/redis.module';
+import { JwtModule } from '@nestjs/jwt';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
     }),
-    RedisModule,
+    JwtModule.register({
+      global: true,
+      secret: process.env.JWT_SECRET,
+    }),
     MongooseModule.forRoot(process.env.DATABASE_URL, {
       dbName: 'graphql',
     }),
@@ -26,10 +29,10 @@ import { HealthController } from './health/health.controller';
       typePaths: ['./**/*.graphql'],
       plugins: [ApolloServerPluginLandingPageLocalDefault()],
     }),
-
+    RedisModule,
     AuthModule,
   ],
-  controllers: [AppController, HealthController],
+  controllers: [AppController],
   providers: [AppService],
 })
 export class AppModule {}
