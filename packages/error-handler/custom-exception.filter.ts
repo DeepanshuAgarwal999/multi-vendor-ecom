@@ -33,19 +33,22 @@ export class CustomExceptionFilter implements ExceptionFilter {
       fieldName: info?.fieldName,
       path: info?.path,
       operation: info?.operation?.operation,
-      stack: exception.stack,
+      // stack: exception.stack,
     });
 
     // For GraphQL, we just re-throw the exception
     // GraphQL will handle the formatting automatically
     throw exception;
   }
-
   private handleHttpException(exception: HttpException, host: ArgumentsHost) {
     const ctx = host.switchToHttp();
     const response = ctx.getResponse<Response>();
     const request = ctx.getRequest<Request>();
     const status = exception.getStatus();
+
+    // Ignore common browser requests that shouldn't be logged as errors
+    const ignoredPaths = ['/favicon.ico', '/robots.txt', '/apple-touch-icon.png', '/manifest.json'];
+    const shouldIgnoreLogging = status === 404 && ignoredPaths.includes(request.url);
 
     const errorResponse = {
       statusCode: status,
@@ -55,13 +58,16 @@ export class CustomExceptionFilter implements ExceptionFilter {
       ...(process.env.NODE_ENV === 'development' && { stack: exception.stack }),
     };
 
-    this.logger.error(`HTTP Error: ${exception.message}`, {
-      ...errorResponse,
-      method: request.method,
-      body: request.body,
-      params: request.params,
-      query: request.query,
-    });
+    // Only log if it's not an ignored path
+    if (!shouldIgnoreLogging) {
+      this.logger.error(`HTTP Error: ${exception.message}`, {
+        ...errorResponse,
+        method: request.method,
+        body: request.body,
+        params: request.params,
+        query: request.query,
+      });
+    }
 
     response.status(status).json(errorResponse);
   }

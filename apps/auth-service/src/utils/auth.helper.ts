@@ -1,14 +1,14 @@
 import { BadRequestException } from '@nestjs/common';
 import crypto from 'crypto';
 import { sendMail } from './sendMail';
-import { TooManyRequestsException } from 'packages/error-handler/exceptions';
-import { RedisService } from '../app/redis/redis.service';
+import { RedisService } from '../../../../packages/libs/redis/redis.service';
+import { TooManyRequestsException } from '@packages/error-handler/exceptions';
 
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export const validateRegistrationData = (data: any, userType: 'user' | 'seller') => {
-  const { name, email, password, phone_number, country } = data;
-  if (!name || !email || !password || (userType === 'seller' && (!phone_number || !country))) {
+  const { name, email, phone_number, country } = data;
+  if (!name || !email || (userType === 'seller' && (!phone_number || !country))) {
     throw new BadRequestException('Please provide all required fields');
   }
   if (!emailRegex.test(email)) {
@@ -40,7 +40,6 @@ export const generateOtp = (): string => {
 };
 
 export const sendOtp = async (name: string, email: string, templateName: string, redisService: RedisService) => {
-
   const otp = generateOtp();
 
   await sendMail(email, 'OTP Verification', templateName, { name, otp });
