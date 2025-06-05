@@ -1,22 +1,27 @@
-import { Injectable, ExecutionContext } from '@nestjs/common';
-import { AuthGuard } from '@nestjs/passport';
+import { Injectable, ExecutionContext, CanActivate } from '@nestjs/common';
 import { GqlExecutionContext } from '@nestjs/graphql';
 import { AuthenticationError } from 'apollo-server-core';
+import { AuthService } from '../auth/auth.service';
+import { JwtService } from '@nestjs/jwt';
 
 @Injectable()
 // In order to use AuthGuard together with GraphQL, you have to extend
 // the built-in AuthGuard class and override getRequest() method.
-export class JwtAuthGuard extends AuthGuard('jwt') {
-  getRequest(context: ExecutionContext) {
-    const ctx = GqlExecutionContext.create(context);
-    const request = ctx.getContext().req;
-    return request;
-  }
+export class JwtAuthGuard implements CanActivate {
+  constructor(private readonly authService: AuthService, private readonly jwt: JwtService) {}
 
-  handleRequest(err: any, user: any, info: any) {
-    if (err || !user) {
-      throw err || new AuthenticationError('Could not authenticate with token');
+  async canActivate(context: ExecutionContext): Promise<boolean> {
+    const gqlContext = GqlExecutionContext.create(context);
+    const { req } = gqlContext.getContext();
+
+    const sessionId = req.cookies?.sessionId;
+
+    if (!sessionId) {
+      throw new AuthenticationError('No session found');
     }
-    return user;
+    const session = await this.authService.validateSession(sessionId);
+    
+    req.user = session;
+    return true;
   }
 }
