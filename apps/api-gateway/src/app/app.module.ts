@@ -8,6 +8,7 @@ import { ConfigModule } from '@nestjs/config';
 import { IntrospectAndCompose } from '@apollo/gateway';
 import { ApolloGatewayDriver, ApolloGatewayDriverConfig } from '@nestjs/apollo';
 import { GraphQLModule } from '@nestjs/graphql';
+import { RedisModule } from '@packages/libs/redis/redis.module';
 
 @Injectable()
 class CustomThrottlerGuard extends ThrottlerGuard {
@@ -37,14 +38,15 @@ class CustomThrottlerGuard extends ThrottlerGuard {
         limit: 1000, // This will be overridden by CustomThrottlerGuard
       },
     ]),
-    GraphQLModule.forRoot<ApolloGatewayDriverConfig>({
-      driver: ApolloGatewayDriver,
-      gateway: {
-        supergraphSdl: new IntrospectAndCompose({
-          subgraphs: [{ name: 'User', url: 'http://localhost:6001/api/graphql' }],
-        }),
-      },
-    }),
+    RedisModule,
+    // GraphQLModule.forRoot<ApolloGatewayDriverConfig>({
+    //   driver: ApolloGatewayDriver,
+    //   gateway: {
+    //     supergraphSdl: new IntrospectAndCompose({
+    //       subgraphs: [{ name: 'User', url: 'http://localhost:6001/api/graphql' }],
+    //     }),
+    //   },
+    // }),
   ],
   controllers: [AppController],
   providers: [
