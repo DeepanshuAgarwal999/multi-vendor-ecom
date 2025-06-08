@@ -1,6 +1,9 @@
 import Header from '../shared/widgets';
 import './global.css';
 import { Poppins, Roboto } from 'next/font/google'
+import Providers from './Providers';
+import { Toaster } from 'sonner'
+
 
 export const metadata = {
   title: 'AQUALITY',
@@ -20,9 +23,12 @@ const roboto = Roboto({
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${poppins.variable} ${roboto.variable} antialiased`}>
-        <Header />
-        {children}
+      <body className={`${roboto.variable} ${poppins.variable}  antialiased`}>
+        <Toaster richColors position='top-right' visibleToasts={2} />
+        <Providers>
+          <Header />
+          {children}
+        </Providers>
       </body>
     </html>
   );
