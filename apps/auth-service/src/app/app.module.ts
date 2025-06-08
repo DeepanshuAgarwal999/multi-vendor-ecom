@@ -24,6 +24,7 @@ import { JwtModule } from '@nestjs/jwt';
     }),
     GraphQLModule.forRoot<ApolloDriverConfig>({
       driver: ApolloFederationDriver,
+      context: ({ req, res }) => ({ req, res }),
       playground: false,
       path: '/api/graphql',
       typePaths: ['./**/*.graphql'],
