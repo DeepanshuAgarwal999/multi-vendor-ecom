@@ -25,11 +25,23 @@ type Query {
   users: [User]
   user(id: ID!): User
 }
-
+type LoginUserData {
+  id: ID!
+  name: String!
+  email: String!
+}
+type LoginUserResponse {
+  user: LoginUserData!
+  message: String!
+}
 
 type Mutation {
   userRegistration(name: String!, email: String!): AuthResponse!
+  loginUser(email: String!, password: String!): LoginUserResponse!
   verifyRegistrationOtp(email: String!, otp: String!, password: String!, name: String!): AuthResponse!
+  userForgotPassword(email: String!): AuthResponse!
+  verifyForgotPasswordOtp(email: String!, otp: String!): AuthResponse!
+  userResetPassword(email: String!, newPassword: String!): AuthResponse!
   updateUser(id: ID!, name: String!, email: String!): User!
   deleteUser(id: ID!): User
 }

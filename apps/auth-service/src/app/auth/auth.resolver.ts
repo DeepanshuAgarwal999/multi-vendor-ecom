@@ -1,6 +1,7 @@
 import { Args, Mutation, Resolver, Query, Context } from '@nestjs/graphql';
 import { AuthService } from './auth.service';
 import { validateRegistrationData } from '../../utils/auth.helper';
+import { Request, Response } from 'express';
 
 @Resolver('User')
 export class AuthResolver {
@@ -36,7 +37,11 @@ export class AuthResolver {
   }
 
   @Mutation('loginUser')
-  async loginUser(@Args('email') email: string, @Args('password') password: string, @Context() context: any) {
+  async loginUser(
+    @Args('email') email: string,
+    @Args('password') password: string,
+    @Context() context: { req: Request; res: Response }
+  ) {
     const response = context.res;
     return this.userService.loginUser(email, password, response);
   }
@@ -51,11 +56,7 @@ export class AuthResolver {
   }
 
   @Mutation('verifyForgotPasswordOtp')
-  async verifyForgotPasswordOtp(
-    @Args('email') email: string,
-    @Args('otp') otp: string,
-    @Args('newPassword') password: string
-  ) {
+  async verifyForgotPasswordOtp(@Args('email') email: string, @Args('otp') otp: string) {
     return this.userService.verifyForgotPasswordOtp({ email, otp });
   }
 

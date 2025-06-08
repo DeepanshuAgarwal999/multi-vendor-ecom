@@ -89,20 +89,17 @@ export class AuthService {
       { id: user.id, role: 'user' },
       { expiresIn: '7d', secret: process.env.REFRESH_TOKEN_SECRET }
     );
-    const sessionId = `session_${user.id}_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
-    await this.redisService.setSession(
-      sessionId,
-      {
-        accessToken,
-        refreshToken,
-        createdAt: new Date().toISOString(),
-      },
-      7 * 24 * 60 * 60
-    );
     if (response) {
-      response.cookie('sessionId', sessionId, {
+      response.cookie('accessToken', accessToken, {
         httpOnly: true,
-        secure: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'none',
+        maxAge: 7 * 24 * 60 * 60 * 1000,
+        path: '/',
+      });
+      response.cookie('refreshToken', refreshToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
         sameSite: 'none',
         maxAge: 7 * 24 * 60 * 60 * 1000,
         path: '/',
@@ -114,9 +111,10 @@ export class AuthService {
         name: user.name,
         email: user.email,
       },
+      message: 'Login successful',
     };
   }
-  
+
   async validateSession(sessionId: string) {
     const session: any = await this.redisService.getSession(sessionId);
     if (!session) {
@@ -203,5 +201,4 @@ export class AuthService {
       where: { id },
     });
   }
-
 }
