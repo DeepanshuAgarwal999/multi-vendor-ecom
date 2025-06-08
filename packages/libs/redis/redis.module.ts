@@ -15,17 +15,18 @@ import { RedisService } from './redis.service';
           maxRetriesPerRequest: 3,
           lazyConnect: true,
           keepAlive: 0,
-          connectTimeout: 10000,
+          connectTimeout: 30000,
           commandTimeout: 5000,
           enableReadyCheck: false,
           maxLoadingTimeout: 0,
+
           // Handle connection errors gracefully
           reconnectOnError: err => {
             console.error('Redis reconnection error:', err.message);
             return false;
           },
           retryDelayOnClusterDown: 300,
-          enableOfflineQueue: false,
+          enableOfflineQueue: true,
         },
       }),
       inject: [ConfigService],
