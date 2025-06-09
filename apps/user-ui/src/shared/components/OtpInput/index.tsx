@@ -26,6 +26,30 @@ const OtpInput = forwardRef<OtpInputRef, { length?: number }>(({ length = 4 }, r
         getOtp: () => otp.join(''),
         clearOtp: () => setOtp(Array(length).fill(''))
     }))
+    const handlePaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
+        e.preventDefault();
+        const pasteData = e.clipboardData.getData("Text").replace(/\D/g, ""); // Only digits
+        if (pasteData.length === 0) return;
+
+        const otpArray = Array(length)
+            .fill("")
+            .map((_, i) => pasteData[i] || "");
+
+        setOtp(otpArray);
+
+        // Focus the next empty input
+        const firstEmptyIndex = otpArray.findIndex((val) => val === "");
+        const focusIndex = firstEmptyIndex === -1 ? length - 1 : firstEmptyIndex;
+        inputRefs.current[focusIndex]?.focus();
+    };
+
+    useImperativeHandle(ref, () => ({
+        getOtp: () => otp.join(""),
+        clearOtp: () => {
+            setOtp(Array(length).fill(""));
+            inputRefs.current[0]?.focus();
+        },
+    }));
     return (
         <div className='flex items-center justify-center gap-6'>
             {
@@ -41,6 +65,7 @@ const OtpInput = forwardRef<OtpInputRef, { length?: number }>(({ length = 4 }, r
                         value={digit}
                         onChange={(e) => handleOtpChange(e.target.value, index)}
                         onKeyDown={(e) => handleOtpKeyDown(e, index)}
+                        onPaste={handlePaste}
                     />
                 ))
             }
