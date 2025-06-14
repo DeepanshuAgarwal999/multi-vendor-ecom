@@ -122,4 +122,17 @@ export class UserService {
       data: response.data.userResetPassword,
     };
   }
+  static async refreshToken() {
+    const REFRESH_TOKEN = gql`
+      query refreshTokenUser {
+        refreshTokenUser {
+          message
+        }
+      }
+    `;
+    const response = await apolloClient.query({
+      query: REFRESH_TOKEN,
+    });
+    return { data: response.data.refreshTokenUser };
+  }
 }
