@@ -9,8 +9,10 @@ import { PrismaService } from '../prisma.service';
 import { checkOtpRestrictions, sendOtp, trackOtpRequests, verifyOtp } from '../../utils/auth.helper';
 import { RedisService } from '@packages/libs/redis/redis.service';
 import bcrypt from 'bcryptjs';
-import { JwtService } from '@nestjs/jwt';
-import { Response } from 'express';
+import { JsonWebTokenError, JwtService } from '@nestjs/jwt';
+import { Response, Request } from 'express';
+import { decode } from 'punycode';
+import { setCookies, clearAuthCookies } from '../../utils/cookie.helper';
 
 @Injectable()
 export class AuthService {
@@ -84,27 +86,29 @@ export class AuthService {
     if (!isPasswordCorrect) {
       throw new UnauthorizedException('Invalid email or password');
     }
+    // Generate tokens
     const accessToken = this.jwtService.sign({ id: user.id, role: 'user' }, { expiresIn: '15m' });
     const refreshToken = this.jwtService.sign(
       { id: user.id, role: 'user' },
       { expiresIn: '7d', secret: process.env.REFRESH_TOKEN_SECRET }
     );
+
     if (response) {
-      response.cookie('accessToken', accessToken, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'none',
-        maxAge: 7 * 24 * 60 * 60 * 1000,
-        path: '/',
-      });
-      response.cookie('refreshToken', refreshToken, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'none',
-        maxAge: 7 * 24 * 60 * 60 * 1000,
-        path: '/',
-      });
+      // Use helper to set cookies consistently
+      const tokens = setCookies(response, accessToken, refreshToken);
+
+      return {
+        user: {
+          id: user.id,
+          name: user.name,
+          email: user.email,
+        },
+        message: 'Login successful',
+        tokens,
+      };
     }
+
+    // If no response object is provided, just return the data
     return {
       user: {
         id: user.id,
@@ -113,22 +117,6 @@ export class AuthService {
       },
       message: 'Login successful',
     };
-  }
-
-  async validateSession(sessionId: string) {
-    const session: any = await this.redisService.getSession(sessionId);
-    if (!session) {
-      throw new UnauthorizedException('Session expired');
-    }
-    const accessToken = this.jwtService.verify(session.accessToken);
-    if (!accessToken || accessToken.exp < Date.now() / 1000) {
-      throw new UnauthorizedException('Session expired');
-    }
-    const refreshToken = this.jwtService.verify(session.refreshToken, { secret: process.env.REFRESH_TOKEN_SECRET });
-    if (!refreshToken || refreshToken.exp < Date.now() / 1000) {
-      throw new UnauthorizedException('Session expired');
-    }
-    return session;
   }
 
   async userForgotPassword(email: string) {
@@ -157,6 +145,7 @@ export class AuthService {
       message: 'User password updated successfully',
     };
   }
+
   async userResetPassword(email: string, newPassword: string) {
     const user = await this.prisma.users.findUnique({
       where: { email },
@@ -179,14 +168,74 @@ export class AuthService {
     };
   }
 
-  async getAllUsers() {
-    return this.prisma.users.findMany();
+  async refreshToken(req: Request, res: Response) {
+    let refreshToken = null;
+    if (req.cookies && typeof req.cookies === 'object' && req.cookies.refreshToken) {
+      refreshToken = req.cookies.refreshToken as string;
+    }
+    if (!refreshToken) throw new UnauthorizedException('Unauthorized! Refresh token not found.');
+
+    try {
+      const decoded = this.jwtService.verify(refreshToken, { secret: process.env.REFRESH_TOKEN_SECRET }) as {
+        id: string;
+        role: string;
+        exp: number;
+      };
+      if (!decoded || !decoded.id || !decoded.role) throw new JsonWebTokenError('Forbidden! Invalid refresh token');
+
+      let account;
+      if (decoded.role === 'user') {
+        account = await this.prisma.users.findUnique({
+          where: { id: decoded.id },
+        });
+      } else {
+        // account = await this.prisma.vendors.findUnique({
+        //   where: { id: decoded.id },
+        // });
+      }
+      if (!account) throw new NotFoundException('User/seller account not found');
+
+      const newAccessToken = this.jwtService.sign({ id: account.id, role: decoded.role }, { expiresIn: '15m' });
+      const newRefreshToken = this.jwtService.sign(
+        { id: account.id, role: decoded.role },
+        { expiresIn: '7d', secret: process.env.REFRESH_TOKEN_SECRET }
+      );
+
+      // Use the same helper for consistent cookie handling
+      const tokens = setCookies(res, newAccessToken, newRefreshToken);
+
+      return {
+        message: 'Token refreshed successfully',
+        status: true,
+        user: {
+          id: account.id,
+          name: account.name,
+          email: account.email,
+        },
+        tokens, // Include tokens in body for client backup
+      };
+    } catch (error) {
+      // Use helper to clear cookies
+      clearAuthCookies(res);
+      throw new UnauthorizedException('Session expired. Please login again.');
+    }
   }
 
-  async getUser(id: string) {
-    return this.prisma.users.findUnique({
-      where: { id },
-    });
+  async logoutUser(res: Response) {
+    clearAuthCookies(res);
+    return {
+      message: 'Logged out successfully',
+      status: true,
+    };
+  }
+
+  async getUser(req: any) {
+    console.log(req.user.role);
+    return { id: req.user.id, role: req.user.role };
+  }
+
+  async getAllUsers() {
+    return this.prisma.users.findMany();
   }
 
   async updateUser(id: string, name: string, email: string) {

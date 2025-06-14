@@ -24,6 +24,8 @@ type AuthResponse {
 type Query {
   users: [User]
   user(id: ID!): User
+  getLoggedInUser: UserInfo!
+  refreshTokenUser: AuthResponse!
 }
 type LoginUserData {
   id: ID!
@@ -33,6 +35,10 @@ type LoginUserData {
 type LoginUserResponse {
   user: LoginUserData!
   message: String!
+}
+type UserInfo {
+  id: ID!
+  role: String!
 }
 
 type Mutation {

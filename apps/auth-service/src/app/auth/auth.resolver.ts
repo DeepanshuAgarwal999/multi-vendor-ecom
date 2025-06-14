@@ -1,7 +1,9 @@
 import { Args, Mutation, Resolver, Query, Context } from '@nestjs/graphql';
 import { AuthService } from './auth.service';
 import { validateRegistrationData } from '../../utils/auth.helper';
-import { Request, Response } from 'express';
+import { Request, response, Response } from 'express';
+import { UseGuards } from '@nestjs/common';
+import { JwtAuthGuard } from '../guards/jwt-auth.guard';
 
 @Resolver('User')
 export class AuthResolver {
@@ -12,9 +14,11 @@ export class AuthResolver {
     return this.userService.getAllUsers();
   }
 
-  @Query('user')
-  async getUser(@Args('id') id: string) {
-    return this.userService.getUser(id);
+  @UseGuards(JwtAuthGuard)
+  @Query('getLoggedInUser')
+  async getLoggedInUser(@Context() context: any) {
+    const { req } = context;
+    return this.userService.getUser(req);
   }
 
   @Mutation('userRegistration')
@@ -58,6 +62,12 @@ export class AuthResolver {
   @Mutation('verifyForgotPasswordOtp')
   async verifyForgotPasswordOtp(@Args('email') email: string, @Args('otp') otp: string) {
     return this.userService.verifyForgotPasswordOtp({ email, otp });
+  }
+
+  @Query('refreshTokenUser')
+  async refreshToken(@Context() context: { req: Request; res: Response }) {
+    const { req, res } = context;
+    return this.userService.refreshToken(req, res);
   }
 
   @Mutation('updateUser')
