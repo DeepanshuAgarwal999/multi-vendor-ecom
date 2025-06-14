@@ -44,6 +44,12 @@ const SignUp = () => {
             inputRefs.current[index - 1]?.focus()
         }
     }
+    const handleOnPaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
+        const pastedText = e.clipboardData.getData('text');
+        if (pastedText.length > 1) {
+            setOtp(pastedText.split('').map((digit) => digit.toString()))
+        }
+    }
     const resendOtp = () => {
 
     }
@@ -190,6 +196,7 @@ const SignUp = () => {
                                                 value={digit}
                                                 onChange={(e) => handleOtpChange(e.target.value, index)}
                                                 onKeyDown={(e) => handleOtpKeyDown(e, index)}
+                                                onPaste={handleOnPaste}
                                             />
                                         ))
                                     }

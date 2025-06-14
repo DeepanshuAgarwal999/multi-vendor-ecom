@@ -25,9 +25,11 @@ const Login = () => {
     }
     const loginMutation = useMutation({
         mutationFn: async (data: FormData) => {
-            await UserService.login(data)
+            return await UserService.login(data)
         },
-        onSuccess: () => {
+        onSuccess: (res, data) => {
+            console.log({ res });
+            console.log({ data });
             router.replace('/')
         },
         onError: (error) => {
