@@ -4,10 +4,12 @@ import { AlignLeft, ChevronDown, Dice1, HeartIcon, ShoppingBag, User2 } from 'lu
 import { useEffect, useState } from 'react'
 import { navItems } from '../../configs/constants'
 import Link from 'next/link'
+import useUser from '../../hooks/useUser'
 
 const HeaderBottom = () => {
     const [show, setShow] = useState(false)
     const [isSticky, setIsSticky] = useState(false)
+    const { user, isLoading, error } = useUser()
 
     useEffect(() => {
         const handleScroll = () => {
