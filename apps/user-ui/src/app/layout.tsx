@@ -1,7 +1,7 @@
 import Header from '../shared/widgets';
 import './global.css';
 import { Poppins, Roboto } from 'next/font/google'
-import Providers from './Providers';
+import Providers from './Provider';
 import { Toaster } from 'sonner'
 
 
