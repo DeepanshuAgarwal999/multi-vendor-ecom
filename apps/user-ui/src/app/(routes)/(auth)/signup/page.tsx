@@ -151,6 +151,7 @@ const SignUp = () => {
 
                             {errors.email && <p className='text-red-500 text-xs italic'>{errors.email.message}</p>}
 
+
                             <label htmlFor='password' className="block text-gray-700 mb-1 mt-4 ">Password</label>
                             <div className='relative'>
                                 <input type={passwordVisible ? 'text' : 'password'} placeholder='Your password' {...register('password', {
