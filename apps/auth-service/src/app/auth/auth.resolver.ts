@@ -50,9 +50,9 @@ export class AuthResolver {
     return this.userService.loginUser(email, password, response);
   }
 
-  @Mutation('userForgotPassword')
-  async userForgotPassword(@Args('email') email: string) {
-    return this.userService.userForgotPassword(email);
+  @Mutation('forgotPassword')
+  async userForgotPassword(@Args('email') email: string, @Args('userType') userType: 'user' | 'seller') {
+    return this.userService.handleForgotPassword(email, userType);
   }
   @Mutation('userResetPassword')
   async userResetPassword(@Args('email') email: string, @Args('newPassword') newPassword: string) {
@@ -78,5 +78,22 @@ export class AuthResolver {
   @Mutation('deleteUser')
   async deleteUser(@Args('id') id: string) {
     return this.userService.deleteUser(id);
+  }
+  // register a new seller
+  @Mutation('registerSeller')
+  async registerSeller(@Args('name') name: string, @Args('email') email: string) {
+    return this.userService.registerSeller({ name, email });
+  }
+
+  @Mutation('verifySeller')
+  async verifySeller(
+    @Args('email') email: string,
+    @Args('otp') otp: string,
+    @Args('password') password: string,
+    @Args('name') name: string,
+    @Args('phone_number') phone_number: string,
+    @Args('country') country: string
+  ) {
+    return this.userService.verifySeller({ email, otp, password, name, phone_number, country });
   }
 }

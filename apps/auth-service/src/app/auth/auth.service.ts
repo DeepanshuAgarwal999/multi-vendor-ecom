@@ -119,17 +119,31 @@ export class AuthService {
     };
   }
 
-  async userForgotPassword(email: string) {
-    const user = await this.prisma.users.findUnique({
-      where: { email },
-    });
+  async handleForgotPassword(email: string, userType: 'user' | 'seller') {
+    let user = null;
+
+    if (userType === 'user') {
+      user = await this.prisma.users.findUnique({
+        where: { email },
+      });
+    } else if (userType === 'seller') {
+      user = await this.prisma.sellers.findUnique({
+        where: { email },
+      });
+    }
+
     if (!user) {
-      throw new NotFoundException('User not found');
+      throw new NotFoundException(`${userType} not found`);
     }
 
     checkOtpRestrictions(email, this.redisService);
     trackOtpRequests(email, this.redisService);
-    await sendOtp(user.name, email, 'user-forgot-password-mail', this.redisService);
+    await sendOtp(
+      user.name,
+      email,
+      userType === 'user' ? 'user-forgot-password-mail' : 'seller-forgot-password-mail',
+      this.redisService
+    );
     return {
       message: 'OTP sent to email, please check your email for verification',
     };
@@ -249,5 +263,62 @@ export class AuthService {
     return this.prisma.users.delete({
       where: { id },
     });
+  }
+
+  // seller services
+
+  async registerSeller({ name, email }: { name: string; email: string }) {
+    const sellerExist = await this.prisma.sellers.findUnique({
+      where: { email },
+    });
+    if (sellerExist) {
+      throw new ConflictException('Seller already exist with this email!');
+    }
+    await checkOtpRestrictions(email, this.redisService);
+    await trackOtpRequests(email, this.redisService);
+
+    await sendOtp(name, email, 'seller-activation-mail', this.redisService);
+
+    return {
+      success: true,
+      message: 'OTP sent to email, please check your email for verification',
+    };
+  }
+  async verifySeller({
+    email,
+    otp,
+    password,
+    name,
+    phone_number,
+    country,
+  }: {
+    email: string;
+    otp: string;
+    password: string;
+    name: string;
+    phone_number: string;
+    country: string;
+  }) {
+    const existingSeller = await this.prisma.sellers.findUnique({
+      where: { email },
+    });
+    if (existingSeller) {
+      throw new ConflictException('Seller already exist with this email!');
+    }
+    await verifyOtp(email, otp, this.redisService);
+    const hashedPassword = await bcrypt.hash(password, 10);
+    await this.prisma.sellers.create({
+      data: {
+        name,
+        email,
+        password: hashedPassword,
+        country,
+        phone_number,
+      },
+    });
+    return {
+      success: true,
+      message: 'Seller created successfully',
+    };
   }
 }
