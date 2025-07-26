@@ -40,14 +40,18 @@ type UserInfo {
   id: ID!
   role: String!
 }
-
+enum UserType {
+  user
+  seller
+}
 type Mutation {
   userRegistration(name: String!, email: String!): AuthResponse!
   loginUser(email: String!, password: String!): LoginUserResponse!
   verifyRegistrationOtp(email: String!, otp: String!, password: String!, name: String!): AuthResponse!
-  userForgotPassword(email: String!): AuthResponse!
+  ForgotPassword(email: String!, userType: UserType!): AuthResponse!
   verifyForgotPasswordOtp(email: String!, otp: String!): AuthResponse!
   userResetPassword(email: String!, newPassword: String!): AuthResponse!
   updateUser(id: ID!, name: String!, email: String!): User!
   deleteUser(id: ID!): User
+  registerSeller(name: String!, email: String!): AuthResponse!
 }
