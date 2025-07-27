@@ -11,7 +11,6 @@ import { RedisService } from '@packages/libs/redis/redis.service';
 import bcrypt from 'bcryptjs';
 import { JsonWebTokenError, JwtService } from '@nestjs/jwt';
 import { Response, Request } from 'express';
-import { decode } from 'punycode';
 import { setCookies, clearAuthCookies } from '../../utils/cookie.helper';
 
 @Injectable()
@@ -267,7 +266,7 @@ export class AuthService {
 
   // seller services
 
-  async registerSeller({ name, email }: { name: string; email: string }) {
+  async sellerRegistration({ name, email }: { name: string; email: string }) {
     const sellerExist = await this.prisma.sellers.findUnique({
       where: { email },
     });
@@ -307,7 +306,7 @@ export class AuthService {
     }
     await verifyOtp(email, otp, this.redisService);
     const hashedPassword = await bcrypt.hash(password, 10);
-    await this.prisma.sellers.create({
+    const seller = await this.prisma.sellers.create({
       data: {
         name,
         email,
@@ -319,6 +318,29 @@ export class AuthService {
     return {
       success: true,
       message: 'Seller created successfully',
+      seller,
     };
+  }
+  async createShop(
+    name: string,
+    address: string,
+    bio: string,
+    opening_hours: string,
+    sellerId: string,
+    category: string,
+    website?: string
+  ) {
+    const shop = await this.prisma.shops.create({
+      data: {
+        name,
+        address,
+        bio,
+        opening_hours,
+        sellerId,
+        website,
+        category,
+      },
+    });
+    return shop;
   }
 }
