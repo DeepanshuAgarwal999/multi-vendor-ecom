@@ -1,7 +1,7 @@
 'use client'
 
 import { useMutation } from '@tanstack/react-query'
-import { UserService } from 'apps/user-ui/src/services/user.services'
+import { SellerService } from 'apps/seller-ui/src/services/seller.service'
 import GoogleButton from 'apps/user-ui/src/shared/components/google-button'
 import { Eye, EyeOff } from 'lucide-react'
 import Link from 'next/link'
@@ -26,7 +26,7 @@ const Login = () => {
     }
     const loginMutation = useMutation({
         mutationFn: async (data: FormData) => {
-            return await UserService.login(data)
+            return await SellerService.login(data)
         },
         onSuccess: (res, data) => {
             console.log({ res });
