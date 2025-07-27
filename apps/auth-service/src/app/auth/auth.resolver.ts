@@ -80,9 +80,9 @@ export class AuthResolver {
     return this.userService.deleteUser(id);
   }
   // register a new seller
-  @Mutation('registerSeller')
-  async registerSeller(@Args('name') name: string, @Args('email') email: string) {
-    return this.userService.registerSeller({ name, email });
+  @Mutation('sellerRegistration')
+  async sellerRegistration(@Args('name') name: string, @Args('email') email: string) {
+    return this.userService.sellerRegistration({ name, email });
   }
 
   @Mutation('verifySeller')
@@ -95,5 +95,18 @@ export class AuthResolver {
     @Args('country') country: string
   ) {
     return this.userService.verifySeller({ email, otp, password, name, phone_number, country });
+  }
+
+  @Mutation('createShop')
+  async createShop(
+    @Args('name') name: string,
+    @Args('address') address: string,
+    @Args('bio') bio: string,
+    @Args('opening_hours') opening_hours: string,
+    @Args('sellerId') sellerId: string,
+    @Args('category') category: string,
+    @Args('website') website?: string
+  ) {
+    return this.userService.createShop(name, address, bio, opening_hours, sellerId, category, website);
   }
 }

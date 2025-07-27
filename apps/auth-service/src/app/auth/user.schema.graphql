@@ -48,10 +48,12 @@ type Mutation {
   userRegistration(name: String!, email: String!): AuthResponse!
   loginUser(email: String!, password: String!): LoginUserResponse!
   verifyRegistrationOtp(email: String!, otp: String!, password: String!, name: String!): AuthResponse!
-  ForgotPassword(email: String!, userType: UserType!): AuthResponse!
+  forgotPassword(email: String!, userType: UserType!): AuthResponse!
   verifyForgotPasswordOtp(email: String!, otp: String!): AuthResponse!
   userResetPassword(email: String!, newPassword: String!): AuthResponse!
   updateUser(id: ID!, name: String!, email: String!): User!
   deleteUser(id: ID!): User
-  registerSeller(name: String!, email: String!): AuthResponse!
+  sellerRegistration(name: String!, email: String!): AuthResponse!
+  verifySeller(email: String!, otp: String!, password: String!, name: String!, phone_number: String!, country: String!): AuthResponse!
+  createShop(name: String!, address: String!, bio: String!, opening_hours: String!, sellerId: ID!, category: String!, website: String): AuthResponse!
 }
