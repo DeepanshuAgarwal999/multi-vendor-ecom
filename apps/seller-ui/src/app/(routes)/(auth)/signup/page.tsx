@@ -1,6 +1,8 @@
 'use client'
 
 import { useMutation } from '@tanstack/react-query'
+import { SellerService } from 'apps/seller-ui/src/services/seller.service'
+import CreateShop from 'apps/seller-ui/src/shared/modules/create-shop'
 import { Countries } from 'apps/seller-ui/src/utils/countries'
 import { UserService } from 'apps/user-ui/src/services/user.services'
 import GoogleButton from 'apps/user-ui/src/shared/components/google-button'
@@ -25,9 +27,10 @@ const SignUp = () => {
     const [canResend, setCanResend] = useState(false)
     const [timer, setTimer] = useState(60)
     const [otp, setOtp] = useState(['', '', '', ''])
-    const [userData, setUserData] = useState<FormData | null>(null)
+    const [sellerData, setSellerData] = useState<FormData | null>(null)
     const inputRefs = useRef<(HTMLInputElement | null)[]>([])
     const [showOtp, setShowOtp] = useState(false)
+    const [sellerId, setSellerId] = useState<string | null>(null)
 
     const router = useRouter()
     const { handleSubmit, register, formState: { errors } } = useForm<FormData>()
@@ -71,27 +74,44 @@ const SignUp = () => {
     }
     const signupMutation = useMutation({
         mutationFn: async (data: FormData) => {
-            const response = await UserService.signUp(data)
+            const response = await SellerService.signUp(data)
             return response
         },
         onSuccess: (res, data) => {
-            setUserData(data)
+            setSellerData(data)
             setShowOtp(true)
             setCanResend(true)
             setTimer(60)
             startResendTimer()
-            toast.success(res?.data.message)
         },
-        onError: (error) => {
-            console.log(error);
-            setServerError(error.message)
-            toast.error(error.message)
+        onError: (error: any) => {
+            const gqlError = error.graphQLErrors[0];
+            let statusCode = gqlError.extensions?.status
+            if (statusCode === 409) {
+                setActiveStep(2); // Navigate to next step
+                return;
+            }
+            setServerError(error.message);
+            toast.error(error.message);
         }
     })
     const verifyOtpMutation = useMutation({
         mutationFn: async () => {
-            const response = await UserService.verifyRegistrationOtp({
-                ...userData,
+            if (!sellerData ||
+                !sellerData.email ||
+                !sellerData.password ||
+                !sellerData.name ||
+                !sellerData.phone_number ||
+                !sellerData.country
+            ) {
+                throw new Error('Missing required registration data')
+            }
+            const response = await SellerService.verifyRegistrationOtp({
+                email: sellerData.email,
+                password: sellerData.password,
+                name: sellerData.name,
+                phone_number: sellerData.phone_number,
+                country: sellerData.country,
                 otp: otp.join('')
             })
             return response
@@ -99,8 +119,9 @@ const SignUp = () => {
         onSuccess: (res, data) => {
             setShowOtp(false)
             setCanResend(false)
-            toast.success(res?.data.message)
-            router.push('/login')
+            console.log({ res });
+            setSellerId(res?.data.seller.id)
+            setActiveStep(2)
         },
         onError: (error) => {
             console.log(error);
@@ -108,7 +129,7 @@ const SignUp = () => {
         }
     })
 
-
+    console.log(sellerId);
     return (
         <div className='w-full flex flex-col items-center pt-10 min-h-screen ' >
             <div className="relative flex items-center justify-between md:w-[50%] mb-8">
@@ -258,6 +279,11 @@ const SignUp = () => {
                             }
                         </>
                     )
+                }
+
+                {
+                    activeStep === 2 &&
+                    <CreateShop sellerId='' setActiveStep={setActiveStep} />
                 }
             </div>
 
