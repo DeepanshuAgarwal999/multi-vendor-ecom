@@ -12,6 +12,9 @@ import { useRouter } from 'next/navigation'
 import { useRef, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { toast } from 'sonner'
+import StripeLogo from '../../../assets/svgs/stripe-logo'
+import { gql } from '@apollo/client'
+import { apolloClient } from 'apps/seller-ui/src/config/apollo-client'
 
 type FormData = {
     email: string,
@@ -128,8 +131,25 @@ const SignUp = () => {
             toast.error(error.message)
         }
     })
-
-    console.log(sellerId);
+    const connectStripe = () => {
+        try {
+            const mutation = gql`mutation CreateStripeLink($sellerId: ID!) {
+                                     createStripeLink(sellerId: $sellerId) {
+                                      message
+                                    }}`
+            const response = apolloClient.mutate({
+                mutation: mutation,
+                variables: {
+                    sellerId: sellerId
+                }
+            })
+            if (response.data.createStripeLink.url) {
+                window.location.href = response.data.createStripeLink.url
+            }
+        } catch (error) {
+            console.log("Error connecting stripe", error)
+        }
+    }
     return (
         <div className='w-full flex flex-col items-center pt-10 min-h-screen ' >
             <div className="relative flex items-center justify-between md:w-[50%] mb-8">
@@ -283,7 +303,20 @@ const SignUp = () => {
 
                 {
                     activeStep === 2 &&
-                    <CreateShop sellerId='' setActiveStep={setActiveStep} />
+                    <CreateShop sellerId={sellerId} setActiveStep={setActiveStep} />
+                }
+
+                {
+                    activeStep === 3 && (
+                        <div className='text-center'>
+                            <h3 className='text-2xl font-semibold '>Withdraw Method</h3>
+                            <br />
+                            <button className='w-full py-2 rounded-lg mt-4 text-lg flex items-center justify-center cursor-pointer  text-white' onClick={connectStripe}>
+                                Connect stripe <StripeLogo />
+                            </button>
+
+                        </div>
+                    )
                 }
             </div>
 
