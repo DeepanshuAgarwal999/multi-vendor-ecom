@@ -12,13 +12,15 @@ import bcrypt from 'bcryptjs';
 import { JsonWebTokenError, JwtService } from '@nestjs/jwt';
 import { Response, Request } from 'express';
 import { setCookies, clearAuthCookies } from '../../utils/cookie.helper';
+import { StripeService } from '../stripe/stripe.service';
 
 @Injectable()
 export class AuthService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly redisService: RedisService,
-    private readonly jwtService: JwtService
+    private readonly jwtService: JwtService,
+    private readonly stripeService: StripeService
   ) {}
 
   async userRegistration({ name, email }) {
@@ -283,6 +285,7 @@ export class AuthService {
       message: 'OTP sent to email, please check your email for verification',
     };
   }
+
   async verifySeller({
     email,
     otp,
@@ -321,6 +324,7 @@ export class AuthService {
       seller,
     };
   }
+
   async createShop(
     name: string,
     address: string,
@@ -342,5 +346,100 @@ export class AuthService {
       },
     });
     return shop;
+  }
+
+  async createStripeConnectLink(sellerId: string) {
+    const seller = await this.prisma.sellers.findUnique({
+      where: { id: sellerId },
+    });
+
+    if (!seller) {
+      throw new NotFoundException('Seller not found');
+    }
+
+    if (seller.stripeId) {
+      throw new ConflictException('Stripe account already exists');
+    }
+
+    const account = await this.stripeService.createConnectAccount({ email: seller.email });
+
+    await this.prisma.sellers.update({
+      where: { id: sellerId },
+      data: { stripeId: account.id },
+    });
+
+    const accountLink = await this.stripeService.createAccountLink(account.id);
+
+    return {
+      message: 'Stripe account created successfully',
+      url: accountLink.url,
+    };
+  }
+
+  async loginSeller(email: string, password: string, res?: Response) {
+    const seller = await this.prisma.sellers.findUnique({
+      where: { email },
+    });
+    if (!seller) {
+      throw new NotFoundException('Seller not found');
+    }
+    const isPasswordCorrect = await bcrypt.compare(password, seller.password);
+    if (!isPasswordCorrect) {
+      throw new UnauthorizedException('Invalid email or password');
+    }
+    // Generate tokens
+    const accessToken = this.jwtService.sign({ id: seller.id, role: 'seller' }, { expiresIn: '15m' });
+    const refreshToken = this.jwtService.sign(
+      { id: seller.id, role: 'seller' },
+      { expiresIn: '7d', secret: process.env.REFRESH_TOKEN_SECRET }
+    );
+
+    if (res) {
+      // Use helper to set cookies consistently
+      const cookieOptions = {
+        httpOnly: true,
+        secure: true, // Required for sameSite: 'none'
+        sameSite: 'none' as const, // Required for cross-origin requests
+        maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+        path: '/',
+      };
+
+      res.cookie('seller-access-token', accessToken, cookieOptions);
+      res.cookie('seller-refresh-token', refreshToken, cookieOptions);
+    }
+
+    return {
+      seller: {
+        id: seller.id,
+        name: seller.name,
+        email: seller.email,
+      },
+      message: 'Login successful',
+      tokens: {
+        accessToken,
+        refreshToken,
+      },
+    };
+  }
+
+  async getSeller(req: any) {
+    return req.seller;
+  }
+
+  logoutSeller(res: Response) {
+    const cookieOptions = {
+      httpOnly: true,
+      secure: true, // Required for sameSite: 'none'
+      sameSite: 'none' as const, // Required for cross-origin requests
+      path: '/',
+    };
+
+    res.clearCookie('seller-access-token', cookieOptions);
+    res.clearCookie('seller-refresh-token', cookieOptions);
+
+    return {
+      message: 'Logged out successfully',
+      status: true,
+    };
   }
 }
