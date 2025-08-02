@@ -109,4 +109,31 @@ export class AuthResolver {
   ) {
     return this.userService.createShop(name, address, bio, opening_hours, sellerId, category, website);
   }
+
+  @Mutation('createStripeLink')
+  async createStripeLink(@Args('sellerId') sellerId: string) {
+    return this.userService.createStripeConnectLink(sellerId);
+  }
+
+  @Mutation('loginSeller')
+  async loginSeller(
+    @Args('email') email: string,
+    @Args('password') password: string,
+    @Context() context: { res: Response }
+  ) {
+    const response = context.res;
+    return this.userService.loginSeller(email, password, response);
+  }
+
+  @Query('logoutSeller')
+  async logoutSeller(@Context() context: { res: Response }) {
+    const response = context.res;
+    return this.userService.logoutSeller(response);
+  }
+
+  @Query('getSeller')
+  async getSeller(@Context() context: any) {
+    const { req } = context;
+    return this.userService.getSeller(req);
+  }
 }

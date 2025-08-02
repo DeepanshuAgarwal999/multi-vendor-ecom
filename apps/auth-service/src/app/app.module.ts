@@ -9,6 +9,7 @@ import { AuthModule } from './auth/auth.module';
 import { ConfigModule } from '@nestjs/config';
 import { RedisModule } from '@packages/libs/redis/redis.module';
 import { JwtModule } from '@nestjs/jwt';
+import { StripeService } from './stripe/stripe.service';
 
 @Module({
   imports: [
@@ -34,6 +35,9 @@ import { JwtModule } from '@nestjs/jwt';
     AuthModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [
+    AppService,
+    StripeService,
+  ],
 })
 export class AppModule {}
